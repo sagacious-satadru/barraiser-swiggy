@@ -119,9 +119,9 @@ function App() {
         <div className="names-container">
           <h2>All Names ({NAMES.length})</h2>
           <ul className="names-list">
-            {/* Using stable name strings as keys rather than array indices to preserve React reconciliation */}
-            {NAMES.map((name) => (
-              <li key={name}>{name}</li>
+            {/* Composite key (name + index) ensures unique identities even if the dataset has duplicate names */}
+            {NAMES.map((name, index) => (
+              <li key={`${name}-${index}`}>{name}</li>
             ))}
           </ul>
         </div>
@@ -155,9 +155,9 @@ function App() {
               <div className="names-container">
                 <h2>Search Results ({results.length})</h2>
                 <ul className="names-list">
-                  {/* Render only the sliced items for the current page */}
-                  {currentItems.map((name) => (
-                    <li key={name}>{name}</li>
+                  {/* Global composite key (name + global dataset index) ensures uniqueness across pages while handling potential duplicate names */}
+                  {currentItems.map((name, index) => (
+                    <li key={`${name}-${startIndex + index}`}>{name}</li>
                   ))}
                 </ul>
               </div>
