@@ -13,6 +13,11 @@ function App() {
   const trimmedQuery = query.trim();
   const isSearching = trimmedQuery.length > 0;
 
+  // Search & Fetch Effect with Debounce + AbortController:
+  // - Debounces keystrokes by 300ms so we do not flood the API on every character.
+  // - Uses AbortController to cancel any in-flight request when the user continues typing
+  //   or clears the input. This prevents race conditions where an older, slower request
+  //   could resolve out-of-order and overwrite newer search results.
   useEffect(() => {
     if (!trimmedQuery) return;
 
@@ -27,33 +32,48 @@ function App() {
         const data = await res.json();
         setResults(data.names || []);
       } catch (err: unknown) {
+        // If the request was aborted due to a newer query or unmount, ignore the error
+        // so we don't log false alarms or clear valid results from a superseding request.
         if (err instanceof DOMException && err.name === "AbortError") {
           return;
         }
         console.error("Failed to fetch names:", err);
         setResults([]);
       } finally {
+        // Only mark loading false if this request wasn't superseded by an abort.
         if (!controller.signal.aborted) {
           setIsLoading(false);
         }
       }
     }, debounceInterval);
 
+    // Cleanup: cancel both the pending timer and any active HTTP request.
     return () => {
       clearTimeout(handler);
       controller.abort();
     };
   }, [trimmedQuery]);
 
+  // Bucket Size Sanitization:
+  // - Parses the user-entered string to an integer.
+  // - Defensively falls back to 1 if input is empty, NaN, or non-positive (< 1).
+  //   This prevents division by zero, NaN totalPages, or infinite step loops.
   const parsedBucketSize = parseInt(bucketSizeInput, 10);
   const effectiveBucketSize =
     Number.isNaN(parsedBucketSize) || parsedBucketSize < 1 ? 1 : parsedBucketSize;
 
+  // Direct Pagination Slicing (O(1) calculation & O(bucketSize) render slice):
+  // - Calculates totalPages dynamically based on current results and bucket size.
+  // - safeBucketNo clamps the active page to [0, totalPages - 1] so that if results shrink
+  //   or bucket size increases while on page 3, we don't get an out-of-bounds blank page.
+  // - Slices only the visible window from `results` instead of allocating a 2D array on every render.
   const totalPages = Math.max(1, Math.ceil(results.length / effectiveBucketSize));
   const safeBucketNo = Math.min(bucketNo, Math.max(totalPages - 1, 0));
   const startIndex = safeBucketNo * effectiveBucketSize;
   const currentItems = results.slice(startIndex, startIndex + effectiveBucketSize);
 
+  // Input Handlers:
+  // - Reset bucketNo to 0 whenever search query or bucket size changes to start from Page 1.
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setQuery(val);
@@ -83,6 +103,7 @@ function App() {
     <div className="app-container">
       <h1>Name Search & Pagination</h1>
       <div className="search-bar">
+        {/* aria-label ensures accessible naming for assistive devices */}
         <input
           type="text"
           className="search-input"
@@ -93,10 +114,12 @@ function App() {
         />
       </div>
 
+      {/* Initial Unpaginated State: displays the full dataset when no query is typed */}
       {!isSearching && (
         <div className="names-container">
           <h2>All Names ({NAMES.length})</h2>
           <ul className="names-list">
+            {/* Using stable name strings as keys rather than array indices to preserve React reconciliation */}
             {NAMES.map((name) => (
               <li key={name}>{name}</li>
             ))}
@@ -104,10 +127,11 @@ function App() {
         </div>
       )}
 
+      {/* Search & Pagination State: displayed whenever a search query is active */}
       {isSearching && (
         <>
           <div className="bucket-size-container">
-            {/* Custom bucket size allows adjusting the number of names displayed per page */}
+            {/* Custom bucket size allows user to control how many items are displayed per page */}
             <label htmlFor="bucket-size">Bucket size: </label>
             <input
               id="bucket-size"
@@ -121,6 +145,7 @@ function App() {
             />
           </div>
 
+          {/* aria-live="polite" notifies screen readers when search status changes */}
           {isLoading ? (
             <p className="status-text" aria-live="polite">Searching...</p>
           ) : results.length === 0 ? (
@@ -130,12 +155,14 @@ function App() {
               <div className="names-container">
                 <h2>Search Results ({results.length})</h2>
                 <ul className="names-list">
+                  {/* Render only the sliced items for the current page */}
                   {currentItems.map((name) => (
                     <li key={name}>{name}</li>
                   ))}
                 </ul>
               </div>
 
+              {/* Pagination Controls with boundary disabling and page status */}
               <div className="pagination-controls">
                 <button
                   type="button"
