@@ -1,51 +1,70 @@
 .app-container {
-  padding: 24px;
-  max-width: 600px;
+  padding: 32px 20px 48px;
+  max-width: 520px;
   margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
   text-align: left;
 }
 
 .search-bar {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .search-input {
   width: 100%;
   padding: 10px 14px;
-  font-size: 16px;
+  font-size: 14px;
   border: 1px solid var(--border);
   border-radius: 8px;
   box-sizing: border-box;
   background: var(--bg);
   color: var(--text-h);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
 }
 
 .bucket-size-container {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 16px;
-  font-size: 15px;
+  margin-bottom: 14px;
+  font-size: 14px;
+  color: var(--text);
 }
 
 .bucket-size-input {
-  width: 80px;
+  width: 72px;
   padding: 6px 10px;
-  font-size: 15px;
+  font-size: 14px;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--bg);
   color: var(--text-h);
+  outline: none;
+}
+
+.bucket-size-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-bg);
 }
 
 .names-container {
-  margin-top: 12px;
+  margin-top: 16px;
 }
 
 .names-container h2 {
-  font-size: 18px;
-  margin-bottom: 12px;
-  color: var(--text-h);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .names-list {
@@ -54,40 +73,52 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg);
 }
 
 .names-list li {
   padding: 10px 14px;
-  background: var(--code-bg);
-  border-radius: 6px;
-  border: 1px solid var(--border);
   color: var(--text-h);
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.15s;
+}
+
+.names-list li:last-child {
+  border-bottom: none;
+}
+
+.names-list li:hover {
+  background: var(--code-bg);
 }
 
 .pagination-controls {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 20px;
+  margin-top: 16px;
   gap: 12px;
 }
 
 .page-button {
-  padding: 8px 16px;
-  font-size: 14px;
+  padding: 7px 14px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--bg);
   color: var(--text-h);
-  transition: opacity 0.2s, background-color 0.2s;
+  transition: all 0.15s ease;
 }
 
 .page-button:hover:not(:disabled) {
   background: var(--accent-bg);
   border-color: var(--accent-border);
+  color: var(--accent);
 }
 
 .page-button:disabled {
@@ -96,13 +127,13 @@
 }
 
 .page-indicator {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text);
 }
 
 .status-text {
   margin-top: 16px;
-  font-style: italic;
+  font-size: 14px;
   color: var(--text);
 }
