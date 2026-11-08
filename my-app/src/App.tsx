@@ -100,6 +100,7 @@ function App() {
       {isSearching && (
         <>
           <div className="bucket-size-container">
+            {/* I have added support for changing the bucket size so we can adjust the number of names displayed per page using the input below. */}
             <label htmlFor="bucket-size">Bucket size: </label>
             <input
               id="bucket-size"
