@@ -16,15 +16,6 @@ A React + TypeScript application featuring live debounced search with an interce
 
 ---
 
-## Tech Stack
-
-- **Framework**: React 19 + TypeScript
-- **Bundler**: Vite
-- **Linter**: Oxlint
-- **Package Manager**: pnpm
-
----
-
 ## Quick Start
 
 ### Prerequisites
