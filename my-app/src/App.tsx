@@ -16,37 +16,43 @@ function App() {
   useEffect(() => {
     if (!trimmedQuery) return;
 
+    const controller = new AbortController();
+
     const handler = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/names?q=${encodeURIComponent(trimmedQuery)}`);
+        const res = await fetch(
+          `/api/names?q=${encodeURIComponent(trimmedQuery)}`,
+          { signal: controller.signal }
+        );
         const data = await res.json();
         setResults(data.names || []);
-      } catch (err) {
+      } catch (err: unknown) {
+        if (err instanceof DOMException && err.name === "AbortError") {
+          return;
+        }
         console.error("Failed to fetch names:", err);
         setResults([]);
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
       }
     }, debounceInterval);
 
-    return () => clearTimeout(handler);
+    return () => {
+      clearTimeout(handler);
+      controller.abort();
+    };
   }, [trimmedQuery]);
 
   const parsedBucketSize = parseInt(bucketSizeInput, 10);
   const effectiveBucketSize =
     Number.isNaN(parsedBucketSize) || parsedBucketSize < 1 ? 1 : parsedBucketSize;
 
-  const createBuckets = (bucketSize: number, names: string[]) => {
-    if (bucketSize <= 0) return [names];
-    const buckets: string[][] = [];
-    for (let i = 0; i < names.length; i += bucketSize) {
-      buckets.push(names.slice(i, i + bucketSize));
-    }
-    return buckets;
-  };
-
-  const bucketedNames = createBuckets(effectiveBucketSize, results);
-  const totalPages = bucketedNames.length;
+  const totalPages = Math.max(1, Math.ceil(results.length / effectiveBucketSize));
+  const safeBucketNo = Math.min(bucketNo, Math.max(totalPages - 1, 0));
+  const startIndex = safeBucketNo * effectiveBucketSize;
+  const currentItems = results.slice(startIndex, startIndex + effectiveBucketSize);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -81,6 +87,7 @@ function App() {
           type="text"
           className="search-input"
           placeholder="Search names..."
+          aria-label="Search names"
           value={query}
           onChange={handleSearchChange}
         />
@@ -90,8 +97,8 @@ function App() {
         <div className="names-container">
           <h2>All Names ({NAMES.length})</h2>
           <ul className="names-list">
-            {NAMES.map((name, index) => (
-              <li key={index}>{name}</li>
+            {NAMES.map((name) => (
+              <li key={name}>{name}</li>
             ))}
           </ul>
         </div>
@@ -100,12 +107,14 @@ function App() {
       {isSearching && (
         <>
           <div className="bucket-size-container">
-            {/* I have added support for changing the bucket size so we can adjust the number of names displayed per page using the input below. */}
+            {/* Custom bucket size allows adjusting the number of names displayed per page */}
             <label htmlFor="bucket-size">Bucket size: </label>
             <input
               id="bucket-size"
               type="number"
               min="1"
+              step="1"
+              aria-label="Bucket size"
               value={bucketSizeInput}
               onChange={handleBucketSizeChange}
               className="bucket-size-input"
@@ -113,16 +122,16 @@ function App() {
           </div>
 
           {isLoading ? (
-            <p className="status-text">Searching...</p>
+            <p className="status-text" aria-live="polite">Searching...</p>
           ) : results.length === 0 ? (
-            <p className="status-text">No results found for "{trimmedQuery}".</p>
+            <p className="status-text" aria-live="polite">No results found for "{trimmedQuery}".</p>
           ) : (
             <>
               <div className="names-container">
                 <h2>Search Results ({results.length})</h2>
                 <ul className="names-list">
-                  {bucketedNames[bucketNo]?.map((name, index) => (
-                    <li key={index}>{name}</li>
+                  {currentItems.map((name) => (
+                    <li key={name}>{name}</li>
                   ))}
                 </ul>
               </div>
@@ -132,18 +141,20 @@ function App() {
                   type="button"
                   className="page-button"
                   onClick={handlePrevPage}
-                  disabled={bucketNo <= 0}
+                  disabled={safeBucketNo <= 0}
+                  aria-label="Previous page"
                 >
                   Previous page
                 </button>
-                <span className="page-indicator">
-                  Page {bucketNo + 1} of {totalPages}
+                <span className="page-indicator" aria-live="polite">
+                  Page {safeBucketNo + 1} of {totalPages}
                 </span>
                 <button
                   type="button"
                   className="page-button"
                   onClick={handleNextPage}
-                  disabled={bucketNo >= totalPages - 1}
+                  disabled={safeBucketNo >= totalPages - 1}
+                  aria-label="Next page"
                 >
                   Next page
                 </button>
