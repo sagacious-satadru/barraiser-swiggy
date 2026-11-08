@@ -15,7 +15,7 @@ function App() {
 
   // Search & Fetch Effect with Debounce + AbortController:
   // - Debounces keystrokes by 300ms so we do not flood the API on every character.
-  // - Uses AbortController to cancel any in-flight request when the user continues typing
+  // - I am using AbortController to cancel any in-flight request when the user continues typing
   //   or clears the input. This prevents race conditions where an older, slower request
   //   could resolve out-of-order and overwrite newer search results.
   useEffect(() => {

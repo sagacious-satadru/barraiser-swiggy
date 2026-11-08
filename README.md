@@ -1,6 +1,6 @@
 # Name Search & Custom Bucket Size Pagination
 
-A React + TypeScript application featuring live debounced search with an intercepted mock API, paired with client-side pagination based on customizable bucket sizes.
+A React + TypeScript application featuring live debounced search with an intercepted mock API, paired with client-side pagination based on customizable bucket sizes. Made some small improvements and added proper pagination functionability.
 
 ---
 
